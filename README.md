@@ -167,6 +167,7 @@ Set same env vars (Supabase + Mailjet + worker settings) on both where applicabl
   - Confirm bucket name is exactly `voice-audio` and service role key is correct.
 - Mailjet API errors:
   - Verify MAILJET_API_KEY/MAILJET_API_SECRET, sender identity, and Mailjet account restrictions.
+  - Use Mailjet Send API keys (API Key + Secret Key), not SMTP credentials.
 - Worker not transcribing:
   - First run downloads whisper model files; ensure network access and enough disk.
 - Requests stuck in `pending`:

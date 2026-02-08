@@ -23,6 +23,12 @@ class MailjetEmailSender:
     def __init__(self, settings: WorkerSettings) -> None:
         self._settings = settings
 
+    @staticmethod
+    def _mask_secret(value: str) -> str:
+        if len(value) <= 8:
+            return "*" * len(value)
+        return f"{value[:4]}...{value[-4:]}"
+
     def send_summary_email(
         self,
         recipient: str,
@@ -75,6 +81,15 @@ class MailjetEmailSender:
         except requests.RequestException as exc:
             raise RuntimeError(f"Mailjet transport failure: {exc}") from exc
         if response.status_code >= 400:
+            if response.status_code == 401:
+                key_hint = self._mask_secret(self._settings.mailjet_api_key)
+                secret_hint = self._mask_secret(self._settings.mailjet_api_secret)
+                raise RuntimeError(
+                    "Mailjet authentication failed (401). "
+                    "Verify MAILJET_API_KEY/MAILJET_API_SECRET are active Send API keys "
+                    "(not SMTP credentials), belong to the same account, and contain no whitespace. "
+                    f"key={key_hint}, secret={secret_hint}"
+                )
             raise RuntimeError(
                 f"Mailjet send failed with status {response.status_code}: {response.text[:400]}"
             )
