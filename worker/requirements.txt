@@ -1,0 +1,8 @@
+anyio==4.8.0
+faster-whisper==1.1.1
+pydantic-settings==2.8.1
+requests==2.32.3
+pytest==8.3.4
+pytest-asyncio==0.25.3
+structlog==24.4.0
+supabase==2.13.0
