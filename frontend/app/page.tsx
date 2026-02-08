@@ -127,7 +127,24 @@ export default function HomePage() {
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        const detectedType = recorder.mimeType || chunksRef.current[0]?.type || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: detectedType });
+
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
+
+        if (blob.size === 0) {
+          setAudioBlob(null);
+          if (audioUrl) {
+            URL.revokeObjectURL(audioUrl);
+            setAudioUrl(null);
+          }
+          setError('Recording is empty. Please try again and speak for at least a second.');
+          return;
+        }
+
         setAudioBlob(blob);
         if (audioUrl) {
           URL.revokeObjectURL(audioUrl);
@@ -136,7 +153,8 @@ export default function HomePage() {
       };
 
       mediaRecorderRef.current = recorder;
-      recorder.start();
+      // Emit chunks during recording so short clips still produce non-empty blobs.
+      recorder.start(250);
       setIsRecording(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not access microphone.');
@@ -147,9 +165,12 @@ export default function HomePage() {
     if (!mediaRecorderRef.current) {
       return;
     }
+    if (mediaRecorderRef.current.state === 'inactive') {
+      return;
+    }
+
+    mediaRecorderRef.current.requestData();
     mediaRecorderRef.current.stop();
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    mediaStreamRef.current = null;
     setIsRecording(false);
   };
 
